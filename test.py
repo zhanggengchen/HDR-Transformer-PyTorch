@@ -7,12 +7,15 @@ import glob
 import logging
 import argparse
 
+import cv2
 from torch.utils.data import DataLoader
-from skimage.measure.simple_metrics import compare_psnr
+from skimage.metrics import structural_similarity as compare_ssim
+from skimage.metrics import peak_signal_noise_ratio as compare_psnr
 from tqdm import tqdm
 
 from dataset.dataset_sig17 import SIG17_Test_Dataset
 from models.hdr_transformer import HDRTransformer
+from models.SCTNet import SCTNet
 from train import test_single_img
 from utils.utils import *
 
@@ -26,19 +29,50 @@ parser.add_argument('--test_batch_size', type=int, default=1, metavar='N',
 parser.add_argument('--num_workers', type=int, default=1, metavar='N',
                         help='number of workers to fetch data (default: 1)')
 parser.add_argument('--patch_size', type=int, default=256)
-parser.add_argument('--pretrained_model', type=str, default='./checkpoints/pretrained_model.pth')
+parser.add_argument('--pretrained_model', type=str, default='./checkpoints/hdr_transformer_ckpt.pth')
 parser.add_argument('--test_best', action='store_true', default=False)
-parser.add_argument('--save_results', action='store_true', default=False)
+parser.add_argument('--save_results', action='store_true', default=True)
 parser.add_argument('--save_dir', type=str, default="./results/hdr_transformer")
 parser.add_argument('--model_arch', type=int, default=0)
+
+def infoLogger(logger_name, logfile_name):
+    # 创建 logger
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+
+    # 创建文件处理器
+    file_handler = logging.FileHandler(logfile_name)
+    file_handler.setLevel(logging.INFO)
+
+    # 创建控制台处理器
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    # 创建格式化器
+    formatter = logging.Formatter('%(asctime)s: [%(levelname)s] - %(message)s')
+
+    # 将格式化器添加到处理器
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # 将处理器添加到 logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
+
 
 def main():
     # Settings
     args = parser.parse_args()
 
+    if not osp.exists(args.save_dir):
+        os.makedirs(args.save_dir)
+    logger = infoLogger("testLogger", osp.join(args.save_dir, "test.log"))
+
     # pretrained_model
-    print(">>>>>>>>> Start Testing >>>>>>>>>")
-    print("Load weights from: ", args.pretrained_model)
+    logger.info(">>>>>>>>> Start Testing >>>>>>>>>")
+    logger.info(f"Load weights from: {args.pretrained_model}")
 
     # cuda and devices
     use_cuda = not args.no_cuda and torch.cuda.is_available()
@@ -47,6 +81,9 @@ def main():
     # model architecture
     model_dict = {
         0: HDRTransformer(embed_dim=60, depths=[6, 6, 6], num_heads=[6, 6, 6], mlp_ratio=2, in_chans=6),
+        1: SCTNet(img_size=(72, 72), in_chans=18,
+                            window_size=8, img_range=1., depths=[6, 6, 6, 6],
+                            embed_dim=60, num_heads=[6, 6, 6, 6], mlp_ratio=2, upsampler='pixelshuffledirect'),
     }
     model = model_dict[args.model_arch].to(device)
     model = nn.DataParallel(model)
@@ -81,15 +118,18 @@ def main():
         psnr_mu.update(scene_psnr_mu)
         ssim_mu.update(scene_ssim_mu)
 
+        logger.info("Image_{}, PSNR_mu/SSIM_mu: {:.4f}/{:.4f}, PSNR_l/SSIM_l: {:.4f}/{:.4f}".format(idx, scene_psnr_mu, scene_ssim_mu, scene_psnr_l, scene_ssim_l))
+
         # save results
         if args.save_results:
             if not osp.exists(args.save_dir):
                 os.makedirs(args.save_dir)
+            cv2.imwrite(os.path.join(args.save_dir, '{}_pred.png'.format(idx)), pred_img_mu)
             save_hdr(os.path.join(args.save_dir, '{}_pred.hdr'.format(idx)), pred_hdr)
 
-    print("Average PSNR_mu: {:.4f}  PSNR_l: {:.4f}".format(psnr_mu.avg, psnr_l.avg))
-    print("Average SSIM_mu: {:.4f}  SSIM_l: {:.4f}".format(ssim_mu.avg, ssim_l.avg))
-    print(">>>>>>>>> Finish Testing >>>>>>>>>")
+    logger.info("Average PSNR_mu: {:.4f}  PSNR_l: {:.4f}".format(psnr_mu.avg, psnr_l.avg))
+    logger.info("Average SSIM_mu: {:.4f}  SSIM_l: {:.4f}".format(ssim_mu.avg, ssim_l.avg))
+    logger.info(">>>>>>>>> Finish Testing >>>>>>>>>")
 
 
 if __name__ == '__main__':

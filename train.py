@@ -19,7 +19,7 @@ def get_args():
     parser.add_argument('--patch_size', type=int, default=256),
     parser.add_argument("--sub_set", type=str, default='sig17_training_crop128_stride64',
                         help='dataset directory')
-    parser.add_argument('--logdir', type=str, default='./checkpoints',
+    parser.add_argument('--logdir', type=str, default='./experiment/hdr_transformer',
                         help='target log directory')
     parser.add_argument('--num_workers', type=int, default=8, metavar='N',
                         help='number of workers to fetch data (default: 8)')
