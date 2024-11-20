@@ -9,20 +9,20 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from dataset.dataset_sig17 import SIG17_Training_Dataset, SIG17_Validation_Dataset, SIG17_Test_Dataset
 from models.loss import L1MuLoss, JointReconPerceptualLoss
-from models.hdr_transformer import HDRTransformer
+from models.SIDUNet import SIDUNet
 from utils.utils import *
 from utils.training import *
 from torch.utils.tensorboard import SummaryWriter
 
 def get_args():
-    parser = argparse.ArgumentParser(description='HDR-Transformer',
+    parser = argparse.ArgumentParser(description='UNet',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--dataset_dir", type=str, default='./data',
                         help='dataset directory'),
     parser.add_argument('--patch_size', type=int, default=256),
     parser.add_argument("--sub_set", type=str, default='sig17_training_crop128_stride64',
                         help='dataset directory')
-    parser.add_argument('--logdir', type=str, default='./experiment/hdr_transformer',
+    parser.add_argument('--logdir', type=str, default='./experiment/SIDUNet',
                         help='target log directory')
     parser.add_argument('--num_workers', type=int, default=8, metavar='N',
                         help='number of workers to fetch data (default: 8)')
@@ -47,7 +47,7 @@ def get_args():
                         help='start epoch of training (default: 1)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 100)')
-    parser.add_argument('--batch_size', type=int, default=16, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=64, metavar='N',
                         help='training batch size (default: 16)')
     parser.add_argument('--test_batch_size', type=int, default=1, metavar='N',
                         help='testing batch size (default: 1)')
@@ -70,7 +70,7 @@ def main():
     logger = infoLogger("trainLogger", osp.join(args.logdir, "train.log"))
     tbWriter = SummaryWriter(os.path.join(args.logdir, 'tensorboard'))
     # model architectures
-    model = HDRTransformer(embed_dim=60, depths=[6, 6, 6], num_heads=[6, 6, 6], mlp_ratio=2, in_chans=6)
+    model = SIDUNet(inchannels=6, outchannels=3, channels=64)
     cur_psnr = [-1.0]
     # init
     if args.init_weights:
@@ -104,7 +104,7 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=args.test_batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
     dataset_size = len(train_loader.dataset)
-    logger.info(f'''===> Start training HDR-Transformer
+    logger.info(f'''===> Start training UNet
 
         Dataset dir:     {args.dataset_dir}
         Subset:          {args.sub_set}

@@ -4,6 +4,7 @@ import os, glob
 import cv2
 import math
 import imageio
+import logging
 from math import log10
 import random
 import torch
@@ -58,7 +59,7 @@ def batch_psnr(img, imclean, data_range):
     Iclean = imclean.data.cpu().numpy().astype(np.float32)
     psnr = 0
     for i in range(Img.shape[0]):
-        psnr += peak_signal_noise_ratio(Iclean[i,:,:,:], Img[i,:,:,:], data_range=data_range)
+        psnr += compare_psnr(Iclean[i,:,:,:], Img[i,:,:,:], data_range=data_range)
     return (psnr/Img.shape[0])
 
 def batch_psnr_mu(img, imclean, data_range):
@@ -68,7 +69,7 @@ def batch_psnr_mu(img, imclean, data_range):
     Iclean = imclean.data.cpu().numpy().astype(np.float32)
     psnr = 0
     for i in range(Img.shape[0]):
-        psnr += peak_signal_noise_ratio(Iclean[i,:,:,:], Img[i,:,:,:], data_range=data_range)
+        psnr += compare_psnr(Iclean[i,:,:,:], Img[i,:,:,:], data_range=data_range)
     return (psnr/Img.shape[0])
 
 def adjust_learning_rate(args, optimizer, epoch):
@@ -181,7 +182,31 @@ def radiance_writer(out_path, image):
 def save_hdr(path, image):
     return radiance_writer(path, image)
 
+def infoLogger(logger_name, logfile_name):
+    # 创建 logger
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
 
+    # 创建文件处理器
+    file_handler = logging.FileHandler(logfile_name)
+    file_handler.setLevel(logging.INFO)
+
+    # 创建控制台处理器
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    # 创建格式化器
+    formatter = logging.Formatter('%(asctime)s: [%(levelname)s] - %(message)s')
+
+    # 将格式化器添加到处理器
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # 将处理器添加到 logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
 
 
 

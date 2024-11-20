@@ -16,6 +16,7 @@ from tqdm import tqdm
 from dataset.dataset_sig17 import SIG17_Test_Dataset
 from models.hdr_transformer import HDRTransformer
 from models.SCTNet import SCTNet
+from models.SIDUNet import SIDUNet
 from train import test_single_img
 from utils.utils import *
 
@@ -34,32 +35,6 @@ parser.add_argument('--test_best', action='store_true', default=False)
 parser.add_argument('--save_results', action='store_true', default=True)
 parser.add_argument('--save_dir', type=str, default="./results/hdr_transformer")
 parser.add_argument('--model_arch', type=int, default=0)
-
-def infoLogger(logger_name, logfile_name):
-    # 创建 logger
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.INFO)
-
-    # 创建文件处理器
-    file_handler = logging.FileHandler(logfile_name)
-    file_handler.setLevel(logging.INFO)
-
-    # 创建控制台处理器
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-
-    # 创建格式化器
-    formatter = logging.Formatter('%(asctime)s: [%(levelname)s] - %(message)s')
-
-    # 将格式化器添加到处理器
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    # 将处理器添加到 logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-    return logger
 
 
 def main():
@@ -84,6 +59,7 @@ def main():
         1: SCTNet(img_size=(72, 72), in_chans=18,
                             window_size=8, img_range=1., depths=[6, 6, 6, 6],
                             embed_dim=60, num_heads=[6, 6, 6, 6], mlp_ratio=2, upsampler='pixelshuffledirect'),
+        2: SIDUNet(inchannels=6, outchannels=3, channels=64)
     }
     model = model_dict[args.model_arch].to(device)
     model = nn.DataParallel(model)
