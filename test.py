@@ -17,6 +17,7 @@ from dataset.dataset_sig17 import SIG17_Test_Dataset
 from models.hdr_transformer import HDRTransformer
 from models.SCTNet import SCTNet
 from models.SIDUNet import SIDUNet
+from models.SwinIR import SwinIR
 from train import test_single_img
 from utils.utils import *
 
@@ -59,7 +60,8 @@ def main():
         1: SCTNet(img_size=(72, 72), in_chans=18,
                             window_size=8, img_range=1., depths=[6, 6, 6, 6],
                             embed_dim=60, num_heads=[6, 6, 6, 6], mlp_ratio=2, upsampler='pixelshuffledirect'),
-        2: SIDUNet(inchannels=6, outchannels=3, channels=64)
+        2: SIDUNet(inchannels=6, outchannels=3, channels=64),
+        3: SwinIR(embed_dim=60, depths=[6, 6, 6], num_heads=[6, 6, 6], mlp_ratio=2, in_chans=6),
     }
     model = model_dict[args.model_arch].to(device)
     model = nn.DataParallel(model)
