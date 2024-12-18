@@ -16,7 +16,9 @@ from tqdm import tqdm
 from dataset.dataset_sig17 import SIG17_Test_Dataset
 from models.hdr_transformer import HDRTransformer
 from models.SCTNet import SCTNet
-from models.SIDUNet import SIDUNet
+# from models.SIDUNet import SIDUNet
+# from models.SIDUNet_lsq import SIDUNet
+from models.SIDUNet_dsaq import SIDUNet
 from models.SwinIR import SwinIR
 from train import test_single_img
 from utils.utils import *
@@ -36,6 +38,8 @@ parser.add_argument('--test_best', action='store_true', default=False)
 parser.add_argument('--save_results', action='store_true', default=True)
 parser.add_argument('--save_dir', type=str, default="./results/hdr_transformer")
 parser.add_argument('--model_arch', type=int, default=0)
+parser.add_argument('--nbits_w', type=int, default=4)
+parser.add_argument('--nbits_a', type=int, default=4)
 
 
 def main():
@@ -60,8 +64,11 @@ def main():
         1: SCTNet(img_size=(72, 72), in_chans=18,
                             window_size=8, img_range=1., depths=[6, 6, 6, 6],
                             embed_dim=60, num_heads=[6, 6, 6, 6], mlp_ratio=2, upsampler='pixelshuffledirect'),
-        2: SIDUNet(inchannels=6, outchannels=3, channels=64),
+        # 2: SIDUNet(inchannels=6, outchannels=3, channels=64),
+        2: SIDUNet(inchannels=6, outchannels=3, channels=64, nbits_w=args.nbits_w, nbits_a=args.nbits_a),
         3: SwinIR(embed_dim=60, depths=[6, 6, 6], num_heads=[6, 6, 6], mlp_ratio=2, in_chans=6),
+        4: SCTNet(upscale=2, img_size=(72, 72), in_chans=18, window_size=8, img_range=1., depths=[3, 3, 3, 3],
+            embed_dim=36, num_heads=[6, 6, 6, 6], mlp_ratio=2),
     }
     model = model_dict[args.model_arch].to(device)
     model = nn.DataParallel(model)
@@ -114,5 +121,7 @@ if __name__ == '__main__':
     main()
 
 
+# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/SIDUNet_dsaq_4b/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_4b --model_arch 2 --nbits_w 4 --nbits_a 4
+# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/SIDUNet_dsaq_3b_1/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_3b_1 --model_arch 2 --nbits_w 3 --nbits_a 3
 
-
+# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/sctnet_30g/best_checkpoint.pth --save_dir ./results/sctnet_30g --model_arch 4
