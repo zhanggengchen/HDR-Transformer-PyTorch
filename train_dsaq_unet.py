@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from dataset.dataset_sig17 import SIG17_Training_Dataset, SIG17_Validation_Dataset, SIG17_Test_Dataset
-from models.loss import L1MuLoss, JointReconPerceptualLoss
+from models.loss import L1MuLoss, JointReconPerceptualLoss, JointReconPerceptualPsnrlLoss
 from models.SIDUNet_dsaq import SIDUNet
 from utils.utils import *
 from utils.training import *
@@ -87,6 +87,7 @@ def main():
     loss_dict = {
         0: L1MuLoss,
         1: JointReconPerceptualLoss,
+        2: JointReconPerceptualPsnrlLoss,
         }
     criterion = loss_dict[args.loss_func]().to(device)
     # optimizer
@@ -122,7 +123,7 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=args.test_batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
     dataset_size = len(train_loader.dataset)
-    logger.info(f'''===> Start training LSQ-UNet
+    logger.info(f'''===> Start training DSAQ-UNet
 
         Dataset dir:     {args.dataset_dir}
         Subset:          {args.sub_set}
@@ -132,6 +133,8 @@ def main():
         Learning rate:   {args.lr}
         Training size:   {dataset_size}
         Device:          {device.type}
+        Weight Bits:     {args.nbits_w}
+        Activation Bits: {args.nbits_a}
         ''')
 
     for epoch in range(args.epochs):
@@ -145,4 +148,9 @@ if __name__ == '__main__':
     main()
 
 
-# CUDA_VISIBLE_DEVICES=4,5 python train_dsaq_unet.py --logdir ./experiment/SIDUNet_dsaq_3b_1 --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 3 --nbits_a 3
+# CUDA_VISIBLE_DEVICES=2,3 python train_dsaq_unet.py --loss_func 2 --logdir ./experiment/SIDUNet_dsaq_3b_loss2 --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 3 --nbits_a 3
+# CUDA_VISIBLE_DEVICES=0,1 python train_dsaq_unet.py --loss_func 2 --logdir ./experiment/SIDUNet_dsaq_2b_loss2 --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 2 --nbits_a 2
+# CUDA_VISIBLE_DEVICES=0,1 python train_dsaq_unet.py --loss_func 2 --logdir ./experiment/SIDUNet_dsaq_4b_loss2 --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 4 --nbits_a 4
+# CUDA_VISIBLE_DEVICES=0,1 python train_dsaq_unet.py --loss_func 2 --logdir ./experiment/SIDUNet_dsaq_8b_loss2 --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 8 --nbits_a 8
+# CUDA_VISIBLE_DEVICES=0,1 python train_dsaq_unet.py --logdir ./experiment/SIDUNet_dsaq_8b --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 8 --nbits_a 8
+# CUDA_VISIBLE_DEVICES=2,3 python train_dsaq_unet.py --lr 0.00005 --loss_func 2 --logdir ./experiment/SIDUNet_dsaq_4b_loss2_lr05 --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 4 --nbits_a 4

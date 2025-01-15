@@ -16,6 +16,7 @@ from tqdm import tqdm
 from dataset.dataset_sig17 import SIG17_Test_Dataset
 from models.hdr_transformer import HDRTransformer
 from models.SCTNet import SCTNet
+from models.SAFNet_S import SAFNet_S
 # from models.SIDUNet import SIDUNet
 # from models.SIDUNet_lsq import SIDUNet
 from models.SIDUNet_dsaq import SIDUNet
@@ -69,10 +70,12 @@ def main():
         3: SwinIR(embed_dim=60, depths=[6, 6, 6], num_heads=[6, 6, 6], mlp_ratio=2, in_chans=6),
         4: SCTNet(upscale=2, img_size=(72, 72), in_chans=18, window_size=8, img_range=1., depths=[3, 3, 3, 3],
             embed_dim=36, num_heads=[6, 6, 6, 6], mlp_ratio=2),
+        5: SAFNet_S(),
     }
     model = model_dict[args.model_arch].to(device)
-    model = nn.DataParallel(model)
-    model.load_state_dict(torch.load(args.pretrained_model)['state_dict'])
+    # model = nn.DataParallel(model)
+    # model.load_state_dict(torch.load(args.pretrained_model)['state_dict'])
+    model.load_state_dict(torch.load(args.pretrained_model))
     model.eval()
 
     datasets = SIG17_Test_Dataset(args.dataset_dir, args.patch_size)
@@ -122,6 +125,9 @@ if __name__ == '__main__':
 
 
 # CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/SIDUNet_dsaq_4b/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_4b --model_arch 2 --nbits_w 4 --nbits_a 4
-# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/SIDUNet_dsaq_3b_1/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_3b_1 --model_arch 2 --nbits_w 3 --nbits_a 3
-
-# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/sctnet_30g/best_checkpoint.pth --save_dir ./results/sctnet_30g --model_arch 4
+# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/SIDUNet_dsaq_3b_loss2/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_3b_loss2 --model_arch 2 --nbits_w 3 --nbits_a 3
+# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/SIDUNet_dsaq_2b_loss2/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_2b_loss2 --model_arch 2 --nbits_w 2 --nbits_a 2
+# CUDA_VISIBLE_DEVICES=0 python test.py --pretrained_model experiment/SIDUNet_dsaq_4b_loss2/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_4b_loss2 --model_arch 2 --nbits_w 4 --nbits_a 4
+# CUDA_VISIBLE_DEVICES=5 python test.py --pretrained_model experiment/SIDUNet_lsq_8b/best_checkpoint.pth --save_dir ./results/SIDUNet_lsq_8b --model_arch 2 --nbits_w 8 --nbits_a 8
+# CUDA_VISIBLE_DEVICES=5 python test.py --pretrained_model experiment/SIDUNet_dsaq_8b_loss2/best_checkpoint.pth --save_dir ./results/SIDUNet_dsaq_8b_loss2 --model_arch 2 --nbits_w 8 --nbits_a 8
+# CUDA_VISIBLE_DEVICES=5 python test.py --pretrained_model checkpoints/SAFNet_S_siggraph17.pth --save_dir ./results/SAFNet_S --model_arch 5

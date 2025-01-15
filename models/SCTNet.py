@@ -821,8 +821,30 @@ class SCTNet(nn.Module):
 
         return x
 
-    def forward(self, x1, x2, x3):
-        x = torch.cat((x1, x2, x3), axis=1)
+    # def forward(self, x1, x2, x3):
+    #     x = torch.cat((x1, x2, x3), axis=1)
+    #     H, W = x.shape[2:]
+    #     x = self.check_image_size(x)
+
+    #     self.mean = self.mean.type_as(x)
+    #     x = (x - self.mean) * self.img_range
+    #     x1, x2, x3 = x.chunk(3, dim=1)
+    #     x1 = self.conv1(x1)
+    #     x2 = self.conv2(x2)
+    #     x3 = self.conv3(x3)
+    #     x = torch.cat((x1, x2, x3), dim=1)
+    #     # for lightweight SR
+    #     x = self.conv_after_body(self.forward_features(x)) + self.conv_end(x2)
+    #     x = self.upsample(x)
+
+    #     x = x / self.img_range + self.mean
+
+
+    #     return self.sigmoid(x[:, :, :H * self.upscale, :W * self.upscale])
+    
+
+    def forward(self, x):
+        # 用于计算flops
         H, W = x.shape[2:]
         x = self.check_image_size(x)
 
@@ -838,7 +860,6 @@ class SCTNet(nn.Module):
         x = self.upsample(x)
 
         x = x / self.img_range + self.mean
-
 
         return self.sigmoid(x[:, :, :H * self.upscale, :W * self.upscale])
 

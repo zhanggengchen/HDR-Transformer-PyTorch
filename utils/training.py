@@ -134,7 +134,7 @@ def test(args, model, device, optimizer, epoch, cur_psnr, logger, tbWriter, **kw
         'state_dict': model.state_dict(),
         'optimizer': optimizer.state_dict()
     }
-    torch.save(save_dict, os.path.join(args.logdir, 'val_latest_checkpoint.pth'))
+    torch.save(save_dict, os.path.join(args.logdir, f'epoch_{epoch + 1}.pth'))
     if psnr_mu.avg > cur_psnr[0]:
         torch.save(save_dict, os.path.join(args.logdir, 'best_checkpoint.pth'))
         cur_psnr[0] = psnr_mu.avg

@@ -9,7 +9,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from dataset.dataset_sig17 import SIG17_Training_Dataset, SIG17_Validation_Dataset, SIG17_Test_Dataset
 from models.loss import L1MuLoss, JointReconPerceptualLoss
-from models.SIDUNet_lsq import SIDUNet
+from models.SIDUNet_aq import SIDUNet
 from utils.utils import *
 from utils.training import *
 from torch.utils.tensorboard import SummaryWriter
@@ -54,7 +54,7 @@ def get_args():
                         help='start epoch of training (default: 1)')
     parser.add_argument('--epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 100)')
-    parser.add_argument('--batch_size', type=int, default=64, metavar='N',
+    parser.add_argument('--batch_size', type=int, default=60, metavar='N',
                         help='training batch size (default: 16)')
     parser.add_argument('--test_batch_size', type=int, default=1, metavar='N',
                         help='testing batch size (default: 1)')
@@ -121,7 +121,7 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=args.test_batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
     dataset_size = len(train_loader.dataset)
-    logger.info(f'''===> Start training LSQ-UNet
+    logger.info(f'''===> Start training AQ-UNet
 
         Dataset dir:     {args.dataset_dir}
         Subset:          {args.sub_set}
@@ -131,6 +131,8 @@ def main():
         Learning rate:   {args.lr}
         Training size:   {dataset_size}
         Device:          {device.type}
+        Weight Bits:     {args.nbits_w}
+        Activation Bits: {args.nbits_a}
         ''')
 
     for epoch in range(args.epochs):
@@ -144,4 +146,4 @@ if __name__ == '__main__':
     main()
 
 
-# CUDA_VISIBLE_DEVICES=4,5 python train_lsq_unet.py --logdir ./experiment/SIDUNet_lsq_8b --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 8 --nbits_a 8
+# CUDA_VISIBLE_DEVICES=0,1 python train_aq_unet.py --logdir ./experiment/SIDUNet_aq_2b --pretrained experiment/SIDUNet/best_checkpoint.pth --nbits_w 2 --nbits_a 2

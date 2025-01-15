@@ -252,8 +252,8 @@ class Conv2dOurs(_Conv2dQ):
         if self.bias is not None:
             bias_flops = self.out_channels * active_elements_count
 
-        ratio = max(2, 64 // (2 ** (self.nbits-1)))
-        overall_flops = (overall_conv_flops // ratio) + bias_flops
+        ratio = self.nbits / 32
+        overall_flops = overall_conv_flops * ratio * ratio + bias_flops
 
         module.__flops__ += overall_flops
 
@@ -361,7 +361,7 @@ class ConvTranspose2dOurs(_ConvTranspose2dQ):
             output_height, output_width = output.shape[2:]
             bias_flops = out_channels * batch_size * output_height * output_height
 
-        ratio = 64 // (2 ** (self.nbits-1))
-        overall_flops = (overall_conv_flops // ratio) + bias_flops
+        ratio = self.nbits / 32
+        overall_flops = overall_conv_flops * ratio * ratio + bias_flops
 
         module.__flops__ += int(overall_flops)
